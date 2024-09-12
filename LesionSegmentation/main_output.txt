@@ -1,0 +1,64 @@
+Epoch 29: val_accuracy did not improve from 0.69748
+191/191 [==============================] - 56s 294ms/step - loss: 1.7613e-07 - accuracy: 0.6670 - dice_coeff: 0.0170 - dice_score: 0.0170 - iou: 0.0089 - precision: 0.0103 - val_loss: 1.9540e-06 - val_accuracy: 0.6593 - val_dice_coeff: 0.0201 - val_dice_score: 0.0201 - val_iou: 0.0105 - val_precision: 0.0123
+Epoch 30/30
+  1/191 [..............................] - ETA: 1:14 - loss: 1.0297e-07 - accuracy: 0.6708 - dice_coeff: 0.0047 - dice_score: 0.0047 - iou: 0  2/191 [..............................] - ETA: 59s - loss: 5.3990e-08 - accuracy: 0.6764 - dice_coeff: 0.0302 - dice_score: 0.0302 - iou: 0.  3/191 [..............................] - ETA: 59s - loss: 4.1564e-08 - accuracy: 0.6741 - dice_coeff: 0.0219 - dice_score: 0.0219 - iou: 0.  4/191 [..............................] - ETA: 58s - loss: 7.7453e-08 - accuracy: 0.6734 - dice_coeff: 0.0196 - dice_score: 0.0196 - iou: 0.  5/191 [..............................] - ETA: 58s - loss: 1.1069e-07 - accuracy: 0.6739 - dice_coeff: 0.0213 - dice_score: 0.0213 - iou: 0. 186/191 [============================>.] - ETA: 1s - loss: 1.3740e-07 - accuracy: 0.6671 - dice_coeff: 0.0174 - dice_score: 0.0174 - iou: 0.0187/191 [============================>.] - ETA: 1s - loss: 1.3655e-07 - accuracy: 0.6671 - dice_coeff: 0.0173 - dice_score: 0.0173 - iou: 0.0188/191 [============================>.] - ETA: 0s - loss: 1.3572e-07 - accuracy: 0.6671 - dice_coeff: 0.0173 - dice_score: 0.0173 - iou: 0.0189/191 [============================>.] - ETA: 0s - loss: 1.3491e-07 - accuracy: 0.6671 - dice_coeff: 0.0172 - dice_score: 0.0172 - iou: 0.0190/191 [============================>.] - ETA: 0s - loss: 1.3412e-07 - accuracy: 0.6672 - dice_coeff: 0.0171 - dice_score: 0.0171 - iou: 0.0191/191 [==============================] - ETA: 0s - loss: 1.3333e-07 - accuracy: 0.6673 - dice_coeff: 0.0170 - dice_score: 0.0170 - iou: 0.0089 - precision: 0.0103
+Epoch 30: val_accuracy did not improve from 0.69748
+191/191 [==============================] - 56s 293ms/step - loss: 1.3333e-07 - accuracy: 0.6673 - dice_coeff: 0.0170 - dice_score: 0.0170 - iou: 0.0089 - precision: 0.0103 - val_loss: 1.5756e-06 - val_accuracy: 0.6436 - val_dice_coeff: 0.0195 - val_dice_score: 0.0195 - val_iou: 0.0101 - val_precision: 0.0118
+Hi
+2024-09-12 16:42:55.287996: I tensorflow/core/common_runtime/executor.cc:1197] [/device:CPU:0] (DEBUG INFO) Executor start aborting (this does not indicate an error and you can ignore this message): INVALID_ARGUMENT: You must feed a value for placeholder tensor 'Placeholder/_0' with dtype int32
+	 [[{{node Placeholder/_0}}]]
+34/34 [==============================] - 6s 158ms/step
+Hi
+2024-09-12 16:43:01.125828: I tensorflow/core/common_runtime/executor.cc:1197] [/device:CPU:0] (DEBUG INFO) Executor start aborting (this does not indicate an error and you can ignore this message): INVALID_ARGUMENT: You must feed a value for placeholder tensor 'Placeholder/_0' with dtype int32
+	 [[{{node Placeholder/_0}}]]
+ 1/34 [..............................] - ETA: 7s - loss: 4.3841e-09 - accuracy: 0.6846 - dice_coeff: 0.0215 - dice_score: 0.0215 - iou: 0.010 2/34 [>.............................] - ETA: 2s - loss: 3.7189e-09 - accuracy: 0.6963 - dice_coeff: 0.0113 - dice_score: 0.0113 - iou: 0.005 3/34 [=>............................] - ETA: 2s - loss: 3.7108e-09 - accuracy: 0.6768 - dice_coeff: 0.0083 - dice_score: 0.0083 - iou: 0.004 4/34 [==>...........................] - ETA: 2s - loss: 2.7865e-09 - accuracy: 0.6600 - dice_coeff: 0.0062 - dice_score: 0.0062 - iou: 0.003 6/34 [====>.........................] - ETA: 2s - loss: 2.8321e-09 - accuracy: 0.6549 - dice_coeff: 0.0056 - dice_score: 0.0056 - iou: 0.002 7/34 [=====>........................] - ETA: 2s - loss: 2.5779e-09 - accuracy: 0.6370 - dice_coeff: 0.0058 - dice_score: 0.0058 - iou: 0.002 8/34 [======>.......................] - ETA: 2s - loss: 2.6870e-09 - accuracy: 0.6401 - dice_coeff: 0.0055 - dice_score: 0.0055 - iou: 0.002 9/34 [======>.......................] - ETA: 2s - loss: 2.3899e-09 - accuracy: 0.6449 - dice_coeff: 0.0050 - dice_score: 0.0050 - iou: 0.00211/34 [========>.....................] - ETA: 2s - loss: 2.1268e-09 - accuracy: 0.6519 - dice_coeff: 0.0048 - dice_score: 0.0048 - iou: 0.00213/34 [==========>...................] - ETA: 1s - loss: 2.1356e-09 - accuracy: 0.6550 - dice_coeff: 0.0049 - dice_score: 0.0049 - iou: 0.00214/34 [===========>..................] - ETA: 1s - loss: 2.1551e-09 - accuracy: 0.6613 - dice_coeff: 0.0052 - dice_score: 0.0052 - iou: 0.00215/34 [============>.................] - ETA: 1s - loss: 2.0629e-09 - accuracy: 0.6598 - dice_coeff: 0.0050 - dice_score: 0.0050 - iou: 0.00217/34 [==============>...............] - ETA: 1s - loss: 2.6366e-08 - accuracy: 0.6309 - dice_coeff: 0.0059 - dice_score: 0.0059 - iou: 0.00318/34 [==============>...............] - ETA: 1s - loss: 2.4987e-08 - accuracy: 0.6334 - dice_coeff: 0.0057 - dice_score: 0.0057 - iou: 0.00219/34 [===============>..............] - ETA: 1s - loss: 2.3520e-08 - accuracy: 0.6368 - dice_coeff: 0.0055 - dice_score: 0.0055 - iou: 0.00220/34 [================>.............] - ETA: 1s - loss: 2.2203e-08 - accuracy: 0.6391 - dice_coeff: 0.0052 - dice_score: 0.0052 - iou: 0.00221/34 [=================>............] - ETA: 1s - loss: 2.1026e-08 - accuracy: 0.6429 - dice_coeff: 0.0052 - dice_score: 0.0052 - iou: 0.00223/34 [===================>..........] - ETA: 0s - loss: 2.1225e-08 - accuracy: 0.6438 - dice_coeff: 0.0104 - dice_score: 0.0103 - iou: 0.00524/34 [====================>.........] - ETA: 0s - loss: 2.0187e-08 - accuracy: 0.6472 - dice_coeff: 0.0100 - dice_score: 0.0100 - iou: 0.00526/34 [=====================>........] - ETA: 0s - loss: 1.9371e-08 - accuracy: 0.6489 - dice_coeff: 0.0097 - dice_score: 0.0097 - iou: 0.00527/34 [======================>.......] - ETA: 0s - loss: 1.8486e-08 - accuracy: 0.6478 - dice_coeff: 0.0093 - dice_score: 0.0093 - iou: 0.00428/34 [=======================>......] - ETA: 0s - loss: 1.7983e-08 - accuracy: 0.6490 - dice_coeff: 0.0093 - dice_score: 0.0093 - iou: 0.00430/34 [=========================>....] - ETA: 0s - loss: 2.2966e-08 - accuracy: 0.6488 - dice_coeff: 0.0098 - dice_score: 0.0098 - iou: 0.00531/34 [==========================>...] - ETA: 0s - loss: 2.2077e-08 - accuracy: 0.6481 - dice_coeff: 0.0095 - dice_score: 0.0095 - iou: 0.00432/34 [===========================>..] - ETA: 0s - loss: 2.1353e-08 - accuracy: 0.6482 - dice_coeff: 0.0092 - dice_score: 0.0092 - iou: 0.00434/34 [==============================] - ETA: 0s - loss: 2.0787e-08 - accuracy: 0.6469 - dice_coeff: 0.0089 - dice_score: 0.0089 - iou: 0.00434/34 [==============================] - 3s 87ms/step - loss: 2.0787e-08 - accuracy: 0.6469 - dice_coeff: 0.0089 - dice_score: 0.0089 - iou: 0.0046 - precision: 0.0051
+Test loss:  2.0787416232792566e-08
+Test Dice:  0.008915076032280922
+Hi
+Hi
+Hi
+3/3 [==============================] - 2s 318ms/step
+3/3 [==============================] - 0s 41ms/step
+3/3 [==============================] - 1s 325ms/step
+3/3 [==============================] - 0s 40ms/step
+1/1 [==============================] - 0s 19ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 40ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 39ms/step
+1/1 [==============================] - 0s 18ms/step
+3/3 [==============================] - 0s 39ms/step
+1/1 [==============================] - 0s 17ms/step
+3/3 [==============================] - 0s 40ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 37ms/step
+1/1 [==============================] - 0s 19ms/step
+3/3 [==============================] - 1s 345ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 40ms/step
+1/1 [==============================] - 0s 19ms/step
+1/1 [==============================] - 0s 19ms/step
+3/3 [==============================] - 0s 39ms/step
+1/1 [==============================] - 0s 19ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 39ms/step
+1/1 [==============================] - 0s 19ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 39ms/step
+3/3 [==============================] - 0s 38ms/step
+1/1 [==============================] - 0s 19ms/step
+1/1 [==============================] - 0s 19ms/step
+Average test dice:  0.0070678997
+Average test IoU:  0.0037011025
+Hi
+Hi
+Hi
+Hi
+Hi
+3/3 [==============================] - 0s 39ms/step
+(adi_ani_tf) user@user:~/adithyaes/AdiCode$
+
+TELL ME IS MY MODEL FOR BRAIN LESION SEGMENTATION DOING WELL BASED ON THE ABOVE OUTPUT IN TERMINAL
