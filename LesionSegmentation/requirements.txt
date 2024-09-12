@@ -1,0 +1,8 @@
+nibabel
+numpy
+opencv-python
+matplotlib
+scikit-image
+tensorflow
+focal-loss
+scikit-learn

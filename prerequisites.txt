@@ -1,0 +1,3 @@
+cd C:\Cyberkid\MyProjects\My_Python\DeepLearning
+
+C:\Cyberkid\MyProjects\My_Python\DeepLearning\MyEnv\Scripts\activate.bat
