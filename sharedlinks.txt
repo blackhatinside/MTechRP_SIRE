@@ -1,3 +1,13 @@
+https://ieeexplore.ieee.org/search/searchresult.jsp?newsearch=true&queryText=loss%20function%20medical%20image%20segmentation
+
+https://www.sciencedirect.com/search?qs=loss%20function%20medical%20image%20segmentation
+
+https://arxiv.org/search/?query=loss+function+medical+image+segmentation&searchtype=all&source=header
+
+https://paperswithcode.com/search?q_meta=&q_type=&q=loss+function+medical+image+segmentation
+
+# # # # #
+
 https://miccai-sb.github.io/materials/Ma2019.pdf
 
 https://sci-hub.se/downloads/2021-06-21/20/ma2021.pdf
