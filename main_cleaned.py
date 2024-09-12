@@ -14,13 +14,13 @@ from skimage.transform import resize
 import tensorflow as tf
 import keras.backend as K
 
-from keras.layers.core import Lambda
-from keras.layers.core import Reshape
+from tensorflow.keras.layers.core import Lambda
+from tensorflow.keras.layers.core import Reshape
 
-from keras.layers.convolutional import Conv2D
-from keras.layers.convolutional import Conv2DTranspose
+from tensorflow.keras.layers.convolutional import Conv2D
+from tensorflow.keras.layers.convolutional import Conv2DTranspose
 
-from keras.layers.pooling import MaxPooling2D
+from tensorflow.keras.layers.pooling import MaxPooling2D
 
 from tensorflow.keras.layers import concatenate
 
@@ -30,13 +30,13 @@ from tensorflow.keras.layers import *
 from tensorflow.keras.models import *
 from tensorflow.keras.optimizers import *
 
-from keras.callbacks import CSVLogger
+from tensorflow.keras.callbacks import CSVLogger
 # from tensorflow.keras.callbacks import EarlyStopping
 # from tensorflow.keras.callbacks import ModelCheckpoint
 # from tensorflow.keras.callbacks import ReduceLROnPlateau
-from keras.callbacks import EarlyStopping
-from keras.callbacks import ModelCheckpoint
-from keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ReduceLROnPlateau
 
 from focal_loss import BinaryFocalLoss
 from sklearn.model_selection import train_test_split
