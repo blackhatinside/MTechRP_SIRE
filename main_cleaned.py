@@ -62,10 +62,10 @@ def dice_coeff(y_true,y_pred):
     return (2*numerator + 1)/(denominator+1)
 
 def precision(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
 
 def dsc(y_true, y_pred):
     neg_y_true = 1 - y_true
@@ -89,7 +89,7 @@ def dice_score(y_true, y_pred):
     return dice
 
 def dice_loss(y_true, y_pred):
-    return 1.0 -dice_score(y_true, y_pred)
+    return 1.0 - dice_score(y_true, y_pred)
 
 def focal_loss(gamma=2., alpha=0.25):
     def focal_loss_fixed(y_true, y_pred):
@@ -221,7 +221,8 @@ outputs = Conv2D(1, (1,1),activation="sigmoid")(e5)
 model=Model(inputs=[inputs], outputs=[outputs],name='AttentionUnet')
 
 model.compile(
-    loss=focal_loss(gamma=2.0, alpha=0.25),
+    # loss=focal_loss(gamma=2.0, alpha=0.25),
+    loss=dice_loss,
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
     metrics = ['accuracy', dice_coeff,dice_score,iou, precision]
 )
@@ -315,8 +316,7 @@ print("Average test IoU: ", average_iou)
 
 example_case = 19
 
-dwi_path = os.path.join(base_path, 'rawdata', 'sub-strokecase{}'.format("%04d" %example_case), 'ses-0001', 'dwi/'
-                    'sub-strokecase{}_ses-0001_dwi.nii.gz'.format("%04d" % example_case))
+dwi_path = os.path.join(base_path, 'rawdata', 'sub-strokecase{}'.format("%04d" %example_case), 'ses-0001', 'dwi/', 'sub-strokecase{}_ses-0001_dwi.nii.gz'.format("%04d" % example_case))
 mask_path = os.path.join(base_path, 'derivatives', 'sub-strokecase{}'.format("%04d" %example_case), 'ses-0001', 'sub-strokecase{}_ses-0001_msk.nii.gz'.format("%04d" % example_case))
 
 dwi_image = nib.load(dwi_path).get_fdata()
