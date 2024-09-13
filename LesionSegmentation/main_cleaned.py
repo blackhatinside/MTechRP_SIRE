@@ -42,6 +42,8 @@ IMG_SIZE=112
 PATH_DATASET = base_path
 PATH_RAWDATA = os.path.join(base_path, "rawdata")
 PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
+OUTPUT_DIRECTORY = "./output/ISLESfolder"
+os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
 
 print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
 print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
@@ -69,14 +71,14 @@ def precision(y_true, y_pred):
     precision = true_positives / (predicted_positives + K.epsilon())
     return precision
 
-def dsc(y_true, y_pred):
-    neg_y_true = 1 - y_true
-    neg_y_pred = 1 - y_pred
-    tp = K.sum(y_true * y_pred)
-    fn = K.sum(y_true * neg_y_pred)
-    fp = K.sum(neg_y_true * y_pred)
-    dsc = (2*tp) / ((2*tp) + fn + fp)
-    return dsc
+# def dsc(y_true, y_pred):
+#     neg_y_true = 1 - y_true
+#     neg_y_pred = 1 - y_pred
+#     tp = K.sum(y_true * y_pred)
+#     fn = K.sum(y_true * neg_y_pred)
+#     fp = K.sum(neg_y_true * y_pred)
+#     dsc = (2*tp) / ((2*tp) + fn + fp)
+#     return dsc
 
 def iou(y_true,y_pred):
     intersec = K.sum(y_true * y_pred)
@@ -90,28 +92,48 @@ def dice_score(y_true, y_pred):
     dice = (2.0 * intersection + 1e-5) / (union + 1e-5)
     return dice
 
-def dice_loss(y_true, y_pred):
-    return 1.0 - dice_score(y_true, y_pred)
+# def dice_loss(y_true, y_pred):
+#     return 1.0 - dice_score(y_true, y_pred)
 
-def focal_loss(gamma=2., alpha=0.25):
-    def focal_loss_fixed(y_true, y_pred):
-        y_true = tf.cast(y_true, tf.float32)
-        y_pred = tf.cast(y_pred, tf.float32)
-        epsilon = K.epsilon()
-        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
-        cross_entropy_loss = -y_true * K.log(y_pred)
-        focal_loss_value = alpha * K.pow(1.0 - y_pred, gamma) * cross_entropy_loss
-        return K.sum(focal_loss_value)
-    return focal_loss_fixed
+# def focal_loss(gamma=2., alpha=0.25):
+#     def focal_loss_fixed(y_true, y_pred):
+#         y_true = tf.cast(y_true, tf.float32)
+#         y_pred = tf.cast(y_pred, tf.float32)
+#         epsilon = K.epsilon()
+#         y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
+#         cross_entropy_loss = -y_true * K.log(y_pred)
+#         focal_loss_value = alpha * K.pow(1.0 - y_pred, gamma) * cross_entropy_loss
+#         return K.sum(focal_loss_value)
+#     return focal_loss_fixed
 
-def binary_focal_loss(gamma=2., alpha=0.25):
-    def focal_loss(y_true, y_pred):
-        y_true = tf.cast(y_true, tf.float32)
-        alpha_t = y_true * alpha + (K.ones_like(y_true) - y_true) * (1 - alpha)
-        p_t = y_true * y_pred + (K.ones_like(y_true) - y_true) * (K.ones_like(y_pred) - y_pred) + K.epsilon()
-        focal_loss = - alpha_t * K.pow((K.ones_like(y_true) - p_t), gamma) * K.log(p_t)
-        return K.mean(focal_loss)
-    return focal_loss
+# def binary_focal_loss(gamma=2., alpha=0.25):
+#     def focal_loss(y_true, y_pred):
+#         y_true = tf.cast(y_true, tf.float32)
+#         alpha_t = y_true * alpha + (K.ones_like(y_true) - y_true) * (1 - alpha)
+#         p_t = y_true * y_pred + (K.ones_like(y_true) - y_true) * (K.ones_like(y_pred) - y_pred) + K.epsilon()
+#         focal_loss = - alpha_t * K.pow((K.ones_like(y_true) - p_t), gamma) * K.log(p_t)
+#         return K.mean(focal_loss)
+#     return focal_loss
+
+
+# def dice_loss_general(y_true, y_pred, smooth=1e-6):
+#     y_true_f = tf.keras.backend.flatten(y_true)
+#     y_pred_f = tf.keras.backend.flatten(y_pred)
+#     intersection = tf.reduce_sum(y_true_f * y_pred_f)
+#     union = tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f)
+#     dice = (2. * intersection + smooth) / (union + smooth)
+#     return 1 - dice
+
+# def binary_crossentropy_loss_general(y_true, y_pred):
+#     return tf.keras.losses.BinaryCrossentropy()(y_true, y_pred)
+
+# def binary_focal_loss_general(y_true, y_pred, alpha=0.25, gamma=2.0):
+#     epsilon = tf.keras.backend.epsilon()
+#     y_pred = tf.clip_by_value(y_pred, epsilon, 1. - epsilon)
+#     alpha_t = y_true * alpha + (tf.keras.backend.ones_like(y_true) - y_true) * (1 - alpha)
+#     p_t = y_true * y_pred + (tf.keras.backend.ones_like(y_true) - y_true) * (1 - y_pred)
+#     fl = -alpha_t * tf.keras.backend.pow((tf.keras.backend.ones_like(y_true) - p_t), gamma) * tf.keras.backend.log(p_t)
+#     return tf.keras.backend.mean(fl)
 
 def conv_block(inp,filters):
     x=Conv2D(filters,(3,3),padding='same',activation='relu')(inp)
@@ -150,7 +172,9 @@ def dice_score(y_true, y_pred, smooth=1e-5):
     dice = (2.0 * intersection + smooth) / (union + smooth)
     return dice
 
-def dice_loss(y_true, y_pred):
+# # # # # Loss Functions
+
+def single_dice_loss(y_true, y_pred):
     return 1.0 - dice_score(y_true, y_pred)
 
 def binary_crossentropy_loss(y_true, y_pred):
@@ -252,7 +276,7 @@ model=Model(inputs=[inputs], outputs=[outputs],name='AttentionUnet')
 
 model.compile(
     # loss=focal_loss(gamma=2.0, alpha=0.25),
-    loss=dice_loss,
+    loss=single_dice_loss,
     # loss = binary_crossentropy_loss,
     # loss = binary_focal_loss(gamma=2.0, alpha=0.25),
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
@@ -404,9 +428,6 @@ def iou(y_true,y_pred):
     iou = round(iou, 3)
     return iou
 
-output_directory = './output/ISLESfolder'
-os.makedirs(output_directory, exist_ok=True)
-
 for i in range(5,60):
     plt.figure(figsize=(15, 5))
     plt.subplot(1, 4, 1)
@@ -425,7 +446,7 @@ for i in range(5,60):
     Iou = iou(mask_image[:,:,i], y_pred_thresholded[i,:,:,:])
     plt.suptitle(f"Sample_19_Slice_00{i}  ,Dice Score:{dice}  ,IOU:{Iou}")
     output_filename = f'Sample_19_Slice_00{i}.png'
-    output_path = os.path.join(output_directory, output_filename)
+    output_path = os.path.join(OUTPUT_DIRECTORY, output_filename)
     plt.savefig(output_path)
     # plt.show()
     plt.close()
