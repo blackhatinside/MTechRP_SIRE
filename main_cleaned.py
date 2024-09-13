@@ -18,6 +18,8 @@ from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.layers import concatenate
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import Conv2DTranspose
@@ -25,6 +27,7 @@ from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Lambda
 from tensorflow.keras.layers import MaxPooling2D
 from tensorflow.keras.layers import Reshape
+from tensorflow.keras.models import Model
 
 print("Hi")
 
@@ -251,7 +254,7 @@ att_unet_history = model.fit(
 )
 
 test_wt=model.predict(test_generator)
-test_wt.shape
+print("test_wt.shape: ", test_wt.shape)
 
 results = model.evaluate(test_generator, steps=len(test_ids))
 print("Test loss: ",results[0])
@@ -323,8 +326,8 @@ img_resize = lambda img, dims: cv2.resize(img[:,:], dims)
 
 dwi_image=img_resize(dwi_image, (112, 112))
 mask_image=img_resize(mask_image, (112, 112))
-dwi_image.shape
-mask_image.shape
+print("dwi_image.shape: ", dwi_image.shape)
+print("mask_image.shape: ", mask_image.shape)
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
 
@@ -343,7 +346,7 @@ dwi_image=scaler.fit_transform(dwi_image.reshape(-1, dwi_image.shape[-1])).resha
 X = np.zeros((72,112,112,1))
 for j in range(72):
     X[j,:,:,0] =dwi_image[:,:,j]
-X.shape
+print("X.shape: ", X.shape)
 
 pred_wt=model.predict(X)
 
