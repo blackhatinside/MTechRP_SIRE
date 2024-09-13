@@ -46,6 +46,8 @@ PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
 print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
 print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
 
+# # # # # Functions
+
 def get_ids(path):
     directories = [f.path for f in os.scandir(path) if f.is_dir()]
     ids = []
@@ -140,6 +142,34 @@ def decoder_block(inp,filters,concat_layer):
     x=conv_block(x,filters)
     return x
 
+def dice_score(y_true, y_pred, smooth=1e-5):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    union = K.sum(y_true_f) + K.sum(y_pred_f)
+    dice = (2.0 * intersection + smooth) / (union + smooth)
+    return dice
+
+def dice_loss(y_true, y_pred):
+    return 1.0 - dice_score(y_true, y_pred)
+
+def binary_crossentropy_loss(y_true, y_pred):
+    return tf.keras.losses.BinaryCrossentropy()(y_true, y_pred)
+
+def binary_focal_loss(gamma=2., alpha=0.25):
+    def focal_loss(y_true, y_pred):
+        y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1. - epsilon)
+        alpha_t = y_true * alpha + (K.ones_like(y_true) - y_true) * (1 - alpha)
+        p_t = y_true * y_pred + (K.ones_like(y_true) - y_true) * (1 - y_pred)
+        focal_loss = - alpha_t * K.pow((K.ones_like(y_true) - p_t), gamma) * K.log(p_t)
+        return K.mean(focal_loss)
+    return focal_loss
+
+# # # # # Classes
+
 class DataGenerator(tf.keras.utils.Sequence):
     def __init__(self, list_IDs, dim=(IMG_SIZE,IMG_SIZE), batch_size = 1, n_channels = 1, shuffle=False):
         self.dim = dim
@@ -223,6 +253,8 @@ model=Model(inputs=[inputs], outputs=[outputs],name='AttentionUnet')
 model.compile(
     # loss=focal_loss(gamma=2.0, alpha=0.25),
     loss=dice_loss,
+    # loss = binary_crossentropy_loss,
+    # loss = binary_focal_loss(gamma=2.0, alpha=0.25),
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
     metrics = ['accuracy', dice_coeff,dice_score,iou, precision]
 )
