@@ -40,9 +40,6 @@ PATH_DATASET = base_path
 PATH_RAWDATA = os.path.join(base_path, "rawdata")
 PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
 
-OUTPUT_DIRECTORY = './output/ISLESfolder'
-os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
-
 print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
 print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
 
@@ -54,22 +51,12 @@ def get_ids(path):
         ids.append(directories[i][id_startindex:])
     return sorted(ids)
 
-train_ids = get_ids(PATH_RAWDATA)
-mask_ids = get_ids(PATH_DERIVATIVES)
-
-print("No of train_ids: {}\nNo of mask_ids: {}\n".format(len(train_ids), len(mask_ids)))
-
-train_test_ids, val_ids, train_test_mask, val_mask = train_test_split(train_ids,mask_ids,test_size=0.1)
-train_ids,  test_ids, train_mask , test_mask = train_test_split(train_test_ids,train_test_mask,test_size=0.15)
-
-print("train, validate, test: ", list(map(len, [train_ids, val_ids, test_ids])))
-
-# def dice_coeff(y_true,y_pred):
-#     y_true_new = K.flatten(y_true)
-#     y_pred_new = K.flatten(y_pred)
-#     denominator = K.sum(y_true_new) + K.sum(y_pred_new)
-#     numerator = K.sum(y_true_new * y_pred_new)
-#     return (2*numerator + 1)/(denominator+1)
+def dice_coeff(y_true,y_pred):
+    y_true_new = K.flatten(y_true)
+    y_pred_new = K.flatten(y_pred)
+    denominator = K.sum(y_true_new) + K.sum(y_pred_new)
+    numerator = K.sum(y_true_new * y_pred_new)
+    return (2*numerator + 1)/(denominator+1)
 
 def precision(y_true, y_pred):
         true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -86,11 +73,11 @@ def dsc(y_true, y_pred):
     dsc = (2*tp) / ((2*tp) + fn + fp)
     return dsc
 
-# def iou(y_true,y_pred):
-#     intersec = K.sum(y_true * y_pred)
-#     union = K.sum(y_true + y_pred)
-#     iou = (intersec + 0.1) / (union- intersec + 0.1)
-#     return iou
+def iou(y_true,y_pred):
+    intersec = K.sum(y_true * y_pred)
+    union = K.sum(y_true + y_pred)
+    iou = (intersec + 0.1) / (union- intersec + 0.1)
+    return iou
 
 def dice_score(y_true, y_pred):
     intersection = tf.reduce_sum(y_true * y_pred)
@@ -150,45 +137,6 @@ def decoder_block(inp,filters,concat_layer):
     x=conv_block(x,filters)
     return x
 
-def dice_score(y_true, y_pred):
-    intersection = np.sum(y_true * y_pred)
-    total = np.sum(y_true) + np.sum(y_pred)
-    dice = (2 * intersection +1 ) / (total + 1)
-    dice = round(dice, 3)
-    return dice
-
-# def iou(y_true,y_pred):
-#     intersec = np.sum(y_true * y_pred)
-#     union = np.sum(y_true + y_pred)
-#     iou = (intersec + 1) / (union- intersec + 1)
-#     iou = round(iou, 3)
-#     return iou
-
-def dice_coeff(y_true,y_pred):
-    y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.cast(y_pred, tf.float32)
-    y_true_new = K.flatten(y_true)
-    y_pred_new = K.flatten(y_pred)
-    denominator = K.sum(y_true_new) + K.sum(y_pred_new)
-    if denominator == 0.0:
-        return 1.0
-    numerator = K.sum(y_true_new * y_pred_new)
-    return (2.0*numerator)/(denominator)
-
-def iou(y_true,y_pred):
-    y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.cast(y_pred, tf.float32)
-    y_true = K.flatten(y_true)
-    y_pred = K.flatten(y_pred)
-    intersec = K.sum(y_true * y_pred)
-    union = K.sum(y_true + y_pred)
-    if union == 0.0:
-        return 1.0
-    iou = (intersec) / (union- intersec)
-    return iou
-
-print("Hi")
-
 class DataGenerator(tf.keras.utils.Sequence):
     def __init__(self, list_IDs, dim=(IMG_SIZE,IMG_SIZE), batch_size = 1, n_channels = 1, shuffle=False):
         self.dim = dim
@@ -230,6 +178,19 @@ class DataGenerator(tf.keras.utils.Sequence):
                 X=X.astype(np.float32)
                 y[j] = cv2.resize(msk[:,:,j+0],(112,112));
         return X, y
+
+print("Hi")
+
+train_ids = get_ids(PATH_RAWDATA)
+mask_ids = get_ids(PATH_DERIVATIVES)
+
+print("No of train_ids: {}\nNo of mask_ids: {}\n".format(len(train_ids), len(mask_ids)))
+
+train_test_ids, val_ids,train_test_mask, val_mask = train_test_split(train_ids,mask_ids,test_size=0.1)
+train_ids,  test_ids, train_mask , test_mask = train_test_split(train_test_ids,train_test_mask,test_size=0.15)
+
+tvt_ids = [train_ids, val_ids, test_ids]
+print("train, validate, test: ", list(map(len, tvt_ids)))
 
 training_generator = DataGenerator(train_ids)
 val_generator = DataGenerator(val_ids)
@@ -303,6 +264,29 @@ y_pred_thresholded = test_wt > 0.4
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(y_pred_thresholded[10,:,:,:],cmap='gray')
 
+def dice_coeff(y_true,y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    y_true_new = K.flatten(y_true)
+    y_pred_new = K.flatten(y_pred)
+    denominator = K.sum(y_true_new) + K.sum(y_pred_new)
+    if denominator == 0.0:
+        return 1.0
+    numerator = K.sum(y_true_new * y_pred_new)
+    return (2.0*numerator)/(denominator)
+
+def iou(y_true,y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    y_true = K.flatten(y_true)
+    y_pred = K.flatten(y_pred)
+    intersec = K.sum(y_true * y_pred)
+    union = K.sum(y_true + y_pred)
+    if union == 0.0:
+        return 1.0
+    iou = (intersec) / (union- intersec)
+    return iou
+
 loss_values = []
 dice_values = []
 iou_values = []
@@ -339,7 +323,8 @@ img_resize = lambda img, dims: cv2.resize(img[:,:], dims)
 
 dwi_image=img_resize(dwi_image, (112, 112))
 mask_image=img_resize(mask_image, (112, 112))
-print("DWI img shape: {}\nMask img shape: {}\n".format(dwi_image.shape, mask_image.shape))
+dwi_image.shape
+mask_image.shape
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
 
@@ -370,6 +355,23 @@ y_pred_thresholded = pred_wt > 0.1
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(y_pred_thresholded[31,:,:,:],cmap='gray')
 
+def dice_score(y_true, y_pred):
+    intersection = np.sum(y_true * y_pred)
+    total = np.sum(y_true) + np.sum(y_pred)
+    dice = (2 * intersection +1 ) / (total + 1)
+    dice = round(dice, 3)
+    return dice
+
+def iou(y_true,y_pred):
+    intersec = np.sum(y_true * y_pred)
+    union = np.sum(y_true + y_pred)
+    iou = (intersec + 1) / (union- intersec + 1)
+    iou = round(iou, 3)
+    return iou
+
+output_directory = './output/ISLESfolder'
+os.makedirs(output_directory, exist_ok=True)
+
 for i in range(5,60):
     plt.figure(figsize=(15, 5))
     plt.subplot(1, 4, 1)
@@ -388,7 +390,7 @@ for i in range(5,60):
     Iou = iou(mask_image[:,:,i], y_pred_thresholded[i,:,:,:])
     plt.suptitle(f"Sample_19_Slice_00{i}  ,Dice Score:{dice}  ,IOU:{Iou}")
     output_filename = f'Sample_19_Slice_00{i}.png'
-    output_path = os.path.join(OUTPUT_DIRECTORY, output_filename)
+    output_path = os.path.join(output_directory, output_filename)
     plt.savefig(output_path)
     # plt.show()
     plt.close()
