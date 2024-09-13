@@ -1,76 +1,54 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-print("Hi")# In[1]:
-
-
-#imports
+import cv2
 import nibabel as nib
 import numpy as np
 import os
-import cv2
-from matplotlib import pyplot as plt
 
-from sklearn.preprocessing import MinMaxScaler
-scaler = MinMaxScaler()
-
-from tqdm import tqdm
-from skimage.io import imread, imshow
-from skimage.transform import resize
-
-import tensorflow as tf
 import keras.backend as K
-# from keras.models import Model, load_model
-# from keras.layers import Input, BatchNormalization, Activation, Dense, Dropout
-
-# #
-from keras.layers.core import Lambda
-# from keras.layers.core import RepeatVector
-from keras.layers.core import Reshape
-
-from keras.layers.convolutional import Conv2D
-from keras.layers.convolutional import Conv2DTranspose
-
-from keras.layers.pooling import MaxPooling2D
-from keras.layers.pooling import GlobalMaxPool2D
-
-from tensorflow.keras.layers import concatenate
-
-from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras.callbacks import ReduceLROnPlateau
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.callbacks import TensorBoard
-
-from tensorflow.keras.layers.experimental import preprocessing
-
-from tensorflow.keras import models
-from tensorflow.keras import layers
-from tensorflow.keras import regularizers
-
-from keras.callbacks import EarlyStopping
-from keras.callbacks import ModelCheckpoint
-from keras.callbacks import ReduceLROnPlateau
-
-from keras.callbacks import CSVLogger
-
-# #
-
-#from keras.layers.merge import concatenate, add
-
-#from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
-from tensorflow.keras.models import *
-from tensorflow.keras.layers import *
-from tensorflow.keras.optimizers import *
-
-
-
+import tensorflow as tf
 
 from focal_loss import BinaryFocalLoss
+from matplotlib import pyplot as plt
+from skimage.io import imshow
+from skimage.transform import resize
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from tqdm import tqdm
 
+from tensorflow.keras.callbacks import CSVLogger
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import concatenate
+from tensorflow.keras.layers import Conv2D
+from tensorflow.keras.layers import Conv2DTranspose
+from tensorflow.keras.layers import Input
+from tensorflow.keras.layers import Lambda
+from tensorflow.keras.layers import MaxPooling2D
+from tensorflow.keras.layers import Reshape
+from tensorflow.keras.models import Model
 
-print("Hi")# In[2]:
+print("Hi")
 
+if os.name == 'nt':
+    base_path = "C:\\Cyberkid\\MyMTech\\Labwork\\SecondYear\\MyWork\\Datasets\\ISLES-2022\\ISLES-2022"
+else:
+    base_path = "/home/user/Tf_script/dataset/ISLES_2022/"
+
+scaler = MinMaxScaler()
+
+IMG_SIZE=112
+PATH_DATASET = base_path
+PATH_RAWDATA = os.path.join(base_path, "rawdata")
+PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
+OUTPUT_DIRECTORY = "./output/ISLESfolder"
+os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
+
+print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
+print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
+
+# # # # # Functions
 
 def get_ids(path):
     directories = [f.path for f in os.scandir(path) if f.is_dir()]
@@ -80,54 +58,6 @@ def get_ids(path):
         ids.append(directories[i][id_startindex:])
     return sorted(ids)
 
-
-print("Hi")# In[3]:
-
-if os.name == 'nt':
-    base_path = "C:\\Cyberkid\\MyMTech\\Labwork\\SecondYear\\MyWork\\Datasets\\ISLES-2022\\ISLES-2022"
-else:
-    base_path = "/home/user/Tf_script/dataset/ISLES_2022/"
-PATH_DATASET = base_path
-PATH_RAWDATA = os.path.join(base_path, "rawdata")
-PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
-
-
-print("No of Folders Inside Dataset: ", len(os.listdir(PATH_DATASET)))
-# print("Folders Inside Dataset: ", os.listdir("../input/isles2022small/ISLES2022/"))
-print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
-# print("Folders Inside Training: ", os.listdir("../input/isles2022small/ISLES2022/rawdata/"))
-print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
-# print("Folders Inside Ground Truth: ", os.listdir("../input/isles2022small/ISLES2022/derivatives/"))
-
-
-print("Hi")# In[4]:
-
-
-TRAIN_DATASET_PATH = PATH_RAWDATA
-train_ids = get_ids(TRAIN_DATASET_PATH)
-TRAINMask_DATASET_PATH = PATH_DERIVATIVES
-mask_ids = get_ids(TRAINMask_DATASET_PATH)
-
-print("no of train_ids: ", len(train_ids))
-# print("train_ids: ", train_ids)
-print("no of mask_ids: ", len(mask_ids))
-# print("mask_ids: ", mask_ids)
-
-
-print("Hi")# In[5]:
-
-
-train_test_ids, val_ids,train_test_mask, val_mask = train_test_split(train_ids,mask_ids,test_size=0.1)
-train_ids,  test_ids, train_mask , test_mask = train_test_split(train_test_ids,train_test_mask,test_size=0.15)
-
-tvt_ids = [train_ids, val_ids, test_ids]
-print("train, validate, test: ", list(map(len, tvt_ids)))
-
-
-print("Hi")# In[13]:
-
-
-# defining the performance metrics
 def dice_coeff(y_true,y_pred):
     y_true_new = K.flatten(y_true)
     y_pred_new = K.flatten(y_pred)
@@ -136,20 +66,10 @@ def dice_coeff(y_true,y_pred):
     return (2*numerator + 1)/(denominator+1)
 
 def precision(y_true, y_pred):
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
-
-def dsc(y_true, y_pred):
-    neg_y_true = 1 - y_true
-    neg_y_pred = 1 - y_pred
-    tp = K.sum(y_true * y_pred)
-    fn = K.sum(y_true * neg_y_pred)
-    fp = K.sum(neg_y_true * y_pred)
-    dsc = (2*tp) / ((2*tp) + fn + fp)
-    return dsc
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
 
 def iou(y_true,y_pred):
     intersec = K.sum(y_true * y_pred)
@@ -163,126 +83,35 @@ def dice_score(y_true, y_pred):
     dice = (2.0 * intersection + 1e-5) / (union + 1e-5)
     return dice
 
-def dice_loss(y_true, y_pred):
-    return 1.0 -dice_score(y_true, y_pred)
+# def dice_score(y_true, y_pred, smooth=1e-5):
+#     y_true_f = K.flatten(y_true)
+#     y_pred_f = K.flatten(y_pred)
+#     intersection = K.sum(y_true_f * y_pred_f)
+#     union = K.sum(y_true_f) + K.sum(y_pred_f)
+#     dice = (2.0 * intersection + smooth) / (union + smooth)
+#     return dice
 
-def focal_loss(gamma=2., alpha=0.25):
-    def focal_loss_fixed(y_true, y_pred):
-        y_true = tf.cast(y_true, tf.float32)
-        y_pred = tf.cast(y_pred, tf.float32)
-        epsilon = K.epsilon()
-        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
+# # # # # Loss Functions
 
-        # Compute the focal loss components
-        cross_entropy_loss = -y_true * K.log(y_pred)
-        focal_loss_value = alpha * K.pow(1.0 - y_pred, gamma) * cross_entropy_loss
+def single_dice_loss(y_true, y_pred):
+    return 1.0 - dice_score(y_true, y_pred)
 
-        return K.sum(focal_loss_value)
-
-    return focal_loss_fixed
+def binary_crossentropy_loss(y_true, y_pred):
+    return tf.keras.losses.BinaryCrossentropy()(y_true, y_pred)
 
 def binary_focal_loss(gamma=2., alpha=0.25):
     def focal_loss(y_true, y_pred):
         y_true = tf.cast(y_true, tf.float32)
+        y_pred = tf.cast(y_pred, tf.float32)
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1. - epsilon)
         alpha_t = y_true * alpha + (K.ones_like(y_true) - y_true) * (1 - alpha)
-        p_t = y_true * y_pred + (K.ones_like(y_true) - y_true) * (K.ones_like(y_pred) - y_pred) + K.epsilon()
+        p_t = y_true * y_pred + (K.ones_like(y_true) - y_true) * (1 - y_pred)
         focal_loss = - alpha_t * K.pow((K.ones_like(y_true) - p_t), gamma) * K.log(p_t)
         return K.mean(focal_loss)
     return focal_loss
 
-
-print("Hi")# In[14]:
-
-
-#VOLUME_SLICES = 20
-#VOLUME_START_AT = 5
-IMG_SIZE=112
-
-class DataGenerator(tf.keras.utils.Sequence):
-    def __init__(self, list_IDs, dim=(IMG_SIZE,IMG_SIZE), batch_size = 1, n_channels = 1, shuffle=False):
-
-        self.dim = dim
-        self.batch_size = batch_size
-        self.list_IDs = list_IDs
-        self.n_channels = n_channels
-        self.shuffle = shuffle
-        self.on_epoch_end()
-
-    def __len__(self):
-        return int(np.floor(len(self.list_IDs) / self.batch_size))
-
-    def __getitem__(self, index):
-        indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
-
-        Batch_ids = [self.list_IDs[k] for k in indexes]
-
-        X, y = self.__data_generation(Batch_ids)
-
-        return X, y
-
-    def on_epoch_end(self):
-        self.indexes = np.arange(len(self.list_IDs))
-        if self.shuffle == True:
-            np.random.shuffle(self.indexes)
-
-    def __data_generation(self, Batch_ids):
-        #X = np.zeros((self.batch_size*VOLUME_SLICES, *self.dim, self.n_channels))
-        #y = np.zeros((self.batch_size*VOLUME_SLICES, 112, 112))
-        #Y = np.zeros((self.batch_size*VOLUME_SLICES, *self.dim))
-
-
-        # Generate data
-        for c, i in enumerate(Batch_ids):
-
-
-            case_path = os.path.join(TRAIN_DATASET_PATH, i)
-            data_path = os.path.join(case_path, 'ses-0001', 'dwi', f'{i}_ses-0001_dwi.nii.gz');
-            dwi = nib.load(data_path).get_fdata()
-            #dwi=dwi.astype(np.uint8)
-            dwi=scaler.fit_transform(dwi.reshape(-1, dwi.shape[-1])).reshape(dwi.shape)
-            slices = dwi.shape[2]
-            X = np.zeros((slices, 112,112, 1))
-            #X=X.astype(np.float32)
-
-            case_path2 = os.path.join(TRAINMask_DATASET_PATH, i)
-            data_path_2 = os.path.join(case_path2, 'ses-0001', f'{i}_ses-0001_msk.nii.gz');
-            msk = nib.load(data_path_2).get_fdata()
-            #msk=msk.astype(np.uint8)
-            msk_slices = msk.shape[2]
-            y = np.zeros((msk_slices, 112,112))
-            #y=y.astype(np.float32)
-
-
-            for j in range(slices):
-                X[j,:,:,0] = cv2.resize(dwi[:,:,j+0], (IMG_SIZE, IMG_SIZE));
-                X=X.astype(np.float32)
-                #X[j +VOLUME_SLICES*c,:,:,1] = cv2.resize(ce[:,:,j+VOLUME_START_AT], (IMG_SIZE, IMG_SIZE));
-                y[j] = cv2.resize(msk[:,:,j+0],(112,112));
-                #y=y.astype(np.float32)
-#                 y[j] = msk[:,:,j+VOLUME_START_AT];
-
-        #mask = tf.one_hot(y, 2)
-        #print(X.shape)
-        #print(X.max())
-
-        #return X/np.max(X), mask
-        return X, y
-
-
-print("Hi")# In[15]:
-
-
-training_generator = DataGenerator(train_ids)
-val_generator = DataGenerator(val_ids)
-test_generator = DataGenerator(test_ids)
-
-tvt_generator = [training_generator, val_generator, test_generator]
-print("train, validate, test: ", list(map(len, tvt_generator)))
-# test_ids
-
-
-print("Hi")# In[16]:
-
+# # # # # Layers/Blocks
 
 def conv_block(inp,filters):
     x=Conv2D(filters,(3,3),padding='same',activation='relu')(inp)
@@ -296,7 +125,7 @@ def encoder_block(inp,filters):
     p=MaxPooling2D(pool_size=(2,2))(x)
     return x,p
 
-def attention_block(l_layer,h_layer): #Attention Block
+def attention_block(l_layer,h_layer):
     phi=Conv2D(h_layer.shape[-1],(1,1),padding='same')(l_layer)
     theta=Conv2D(h_layer.shape[-1],(1,1),strides=(2,2),padding='same')(h_layer)
     x=tf.keras.layers.add([phi,theta])
@@ -309,25 +138,78 @@ def attention_block(l_layer,h_layer): #Attention Block
 
 def decoder_block(inp,filters,concat_layer):
     x=Conv2DTranspose(filters,(2,2),strides=(2,2),padding='same')(inp)
-    #concat_layer=attention_block(inp,concat_layer)
     x=concatenate([x,concat_layer])
     x=conv_block(x,filters)
     return x
 
+# # # # # Classes
 
-print("Hi")# In[17]:
+class DataGenerator(tf.keras.utils.Sequence):
+    def __init__(self, list_IDs, dim=(IMG_SIZE,IMG_SIZE), batch_size = 1, n_channels = 1, shuffle=False):
+        self.dim = dim
+        self.batch_size = batch_size
+        self.list_IDs = list_IDs
+        self.n_channels = n_channels
+        self.shuffle = shuffle
+        self.on_epoch_end()
 
+    def __len__(self):
+        return int(np.floor(len(self.list_IDs) / self.batch_size))
+
+    def __getitem__(self, index):
+        indexes = self.indexes[index*self.batch_size:(index+1)*self.batch_size]
+        Batch_ids = [self.list_IDs[k] for k in indexes]
+        X, y = self.__data_generation(Batch_ids)
+        return X, y
+
+    def on_epoch_end(self):
+        self.indexes = np.arange(len(self.list_IDs))
+        if self.shuffle == True:
+            np.random.shuffle(self.indexes)
+
+    def __data_generation(self, Batch_ids):
+        for c, i in enumerate(Batch_ids):
+            case_path = os.path.join(PATH_RAWDATA, i)
+            data_path = os.path.join(case_path, 'ses-0001', 'dwi', f'{i}_ses-0001_dwi.nii.gz');
+            dwi = nib.load(data_path).get_fdata()
+            dwi=scaler.fit_transform(dwi.reshape(-1, dwi.shape[-1])).reshape(dwi.shape)
+            slices = dwi.shape[2]
+            X = np.zeros((slices, 112,112, 1))
+            case_path2 = os.path.join(PATH_DERIVATIVES, i)
+            data_path_2 = os.path.join(case_path2, 'ses-0001', f'{i}_ses-0001_msk.nii.gz');
+            msk = nib.load(data_path_2).get_fdata()
+            msk_slices = msk.shape[2]
+            y = np.zeros((msk_slices, 112,112))
+            for j in range(slices):
+                X[j,:,:,0] = cv2.resize(dwi[:,:,j+0], (IMG_SIZE, IMG_SIZE));
+                X=X.astype(np.float32)
+                y[j] = cv2.resize(msk[:,:,j+0],(112,112));
+        return X, y
+
+print("Hi")
+
+train_ids = get_ids(PATH_RAWDATA)
+mask_ids = get_ids(PATH_DERIVATIVES)
+
+print("No of train_ids: {}\nNo of mask_ids: {}\n".format(len(train_ids), len(mask_ids)))
+
+train_test_ids, val_ids,train_test_mask, val_mask = train_test_split(train_ids,mask_ids,test_size=0.1)
+train_ids,  test_ids, train_mask , test_mask = train_test_split(train_test_ids,train_test_mask,test_size=0.15)
+
+tvt_ids = [train_ids, val_ids, test_ids]
+print("train, validate, test: ", list(map(len, tvt_ids)))
+
+training_generator = DataGenerator(train_ids)
+val_generator = DataGenerator(val_ids)
+test_generator = DataGenerator(test_ids)
+
+tvt_generator = [training_generator, val_generator, test_generator]
+print("train, validate, test: ", list(map(len, tvt_generator)))
 
 VAL_EPOCH = 30
 VAL_PATIENCE = 40
 
-
-print("Hi")# In[18]:
-
-
 inputs=Input((112,112,1))
-#inputfloat=Lambda(lambda x: x / 255)(inputs)
-
 d1,p1=encoder_block(inputs,64)
 d2,p2=encoder_block(p1,128)
 d3,p3=encoder_block(p2,256)
@@ -337,23 +219,20 @@ e2=decoder_block(b1,512,d4)
 e3=decoder_block(e2,256,d3)
 e4=decoder_block(e3,128,d2)
 e5=decoder_block(e4,64,d1)
-
 outputs = Conv2D(1, (1,1),activation="sigmoid")(e5)
-model=Model(inputs=[inputs], outputs=[outputs],name='AttentionUnet')
 
+model=Model(inputs=[inputs], outputs=[outputs],name='AttentionUnet')
 model.compile(
-    loss=focal_loss(gamma=2.0, alpha=0.25),
-    # loss=binary_focal_loss(gamma=2., alpha=0.25),
+    # loss=focal_loss(gamma=2.0, alpha=0.25),
+    loss=single_dice_loss,
+    # loss = binary_crossentropy_loss,
+    # loss = binary_focal_loss(gamma=2.0, alpha=0.25),
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
     metrics = ['accuracy', dice_coeff,dice_score,iou, precision]
 )
-#model.compile(loss=BinaryFocalLoss(gamma=2), optimizer=tf.keras.optimizers.Adam(learning_rate=0.01), metrics = ['accuracy', dice_coeff, iou] )
-
 model.summary()
 
-
-print("Hi")# In[19]:
-
+print("Hi")
 
 checkpoint = ModelCheckpoint(
     'DiceLoss_ISLES22_2DAttention_wts.h5',
@@ -378,43 +257,21 @@ att_unet_history = model.fit(
     epochs=VAL_EPOCH
 )
 
-
-print("Hi")# In[20]:
-
-
 test_wt=model.predict(test_generator)
-test_wt.shape
-
-
-print("Hi")# In[21]:
-
+print("test_wt.shape: ", test_wt.shape)
 
 results = model.evaluate(test_generator, steps=len(test_ids))
 print("Test loss: ",results[0])
 print("Test Dice: ",results[2])
 
-
-print("Hi")# In[22]:
-
-
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(test_wt[10,:,:,:],cmap='gray')
-
-
-print("Hi")# In[23]:
-
 
 y_pred_thresholded = test_wt > 0.4
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(y_pred_thresholded[10,:,:,:],cmap='gray')
 
-
-print("Hi")# In[25]:
-
-
-# Function to compute the Dice coefficient
 def dice_coeff(y_true,y_pred):
-    # Ensure both tensors are of type float32
     y_true = tf.cast(y_true, tf.float32)
     y_pred = tf.cast(y_pred, tf.float32)
     y_true_new = K.flatten(y_true)
@@ -437,91 +294,43 @@ def iou(y_true,y_pred):
     iou = (intersec) / (union- intersec)
     return iou
 
-# Initialize lists to store loss and metric values
 loss_values = []
 dice_values = []
 iou_values = []
 
-# Loop through the test generator
 for batch_x, batch_y in test_generator:
-    # Predict the output for the batch
-    #print(batch_y.shape)
     mask_image = np.expand_dims(batch_y, axis=-1)
     y_predwts = model.predict(batch_x)
-    #y_predwt = y_predwts
-    #print('y_pred',y_predwts.shape)
-    #y_pred_thresholded = np.where(y_predwts >= 0.5, 1.0, 0.0).astype(np.float32)#binary
-    y_pred = np.where(y_predwts < 0.2, 0.0, y_predwts).astype(np.float32)#relu
+    y_pred = np.where(y_predwts < 0.2, 0.0, y_predwts).astype(np.float32)
     y_pred_thresholded = y_pred
-
-    # Loop through each sample in the batch
     for i in range(len(batch_x)):
-        # Compute the loss and metrics for each sample
-        #loss = compute_loss(batch_y[i], y_pred[i])
         dice = dice_coeff(batch_y[i], y_pred_thresholded[i])
         iou_value = iou(batch_y[i], y_pred_thresholded[i])
-
-        # Store the computed values
-        #loss_values.append(loss)
         dice_values.append(dice)
         iou_values.append(iou_value)
-
-
-    # Stop if we've processed all steps
     if len(loss_values) >= len(test_generator):
         break
 
-# Compute the average loss and metrics
-#average_loss = np.mean(loss_values)
 average_dice = np.mean(dice_values)
 average_iou = np.mean(iou_values)
 
-#print("Average test loss: ", average_loss)
 print("Average test dice: ", average_dice)
 print("Average test IoU: ", average_iou)
 
-
-print("Hi")# In[26]:
-
-
-# paths.
-isles_data_dir = '/home/user/Tf_script/dataset/ISLES_2022/'
 example_case = 19
 
-# Set images path.
-dwi_path = os.path.join(isles_data_dir, 'rawdata', 'sub-strokecase{}'.format("%04d" %example_case), 'ses-0001', 'dwi/'
-                    'sub-strokecase{}_ses-0001_dwi.nii.gz'.format("%04d" % example_case))
-mask_path = os.path.join(isles_data_dir, 'derivatives', 'sub-strokecase{}'.format("%04d" %example_case), 'ses-0001', 'sub-strokecase{}_ses-0001_msk.nii.gz'.format("%04d" % example_case))
+dwi_path = os.path.join(base_path, 'rawdata', 'sub-strokecase{}'.format("%04d" %example_case), 'ses-0001', 'dwi/', 'sub-strokecase{}_ses-0001_dwi.nii.gz'.format("%04d" % example_case))
+mask_path = os.path.join(base_path, 'derivatives', 'sub-strokecase{}'.format("%04d" %example_case), 'ses-0001', 'sub-strokecase{}_ses-0001_msk.nii.gz'.format("%04d" % example_case))
 
-
-print("Hi")# In[27]:
-
-
-# Load image data.
 dwi_image = nib.load(dwi_path).get_fdata()
 mask_image = nib.load(mask_path).get_fdata()
 
-
-print("Hi")# In[28]:
-
-
-# def img_resize(img, dims):
-#     return cv2.resize(img[:,:], dims)
-
 img_resize = lambda img, dims: cv2.resize(img[:,:], dims)
-
-
-print("Hi")# In[29]:
-
 
 dwi_image=img_resize(dwi_image, (112, 112))
 mask_image=img_resize(mask_image, (112, 112))
-dwi_image.shape
-mask_image.shape
-
-
-print("Hi")# In[30]:
-
+print("dwi_image.shape: ", dwi_image.shape)
+print("mask_image.shape: ", mask_image.shape)
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
 
@@ -531,62 +340,31 @@ ax1.set_title('Dwi')
 ax1.set_axis_off()
 
 
-# Show DWI image w/overlayed mask.
 ax2.imshow(mask_image[:,:,slice2show], cmap='gray')
-#ax2.imshow(mask_image[:,:,slice2show], alpha=0.5, cmap='copper')
 ax2.set_title('GT')
 ax2.set_axis_off()
 
-
-# In[31]:
-
-
 dwi_image=scaler.fit_transform(dwi_image.reshape(-1, dwi_image.shape[-1])).reshape(dwi_image.shape)
-
-
-# In[32]:
-
 
 X = np.zeros((72,112,112,1))
 for j in range(72):
     X[j,:,:,0] =dwi_image[:,:,j]
-X.shape
-
-
-# In[33]:
-
+print("X.shape: ", X.shape)
 
 pred_wt=model.predict(X)
-
-
-# In[34]:
-
 
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(pred_wt[31,:,:,:],cmap='gray')
 
-
-# In[35]:
-
-
 y_pred_thresholded = pred_wt > 0.1
-
-
-# In[36]:
-
 
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(y_pred_thresholded[31,:,:,:],cmap='gray')
 
-
-# In[37]:
-
-
 def dice_score(y_true, y_pred):
     intersection = np.sum(y_true * y_pred)
     total = np.sum(y_true) + np.sum(y_pred)
-    dice = (2 * intersection +1 ) / (total + 1)  # Adding a small epsilon to avoid division by zero
-    #dice = np.mean(dice)
+    dice = (2 * intersection +1 ) / (total + 1)
     dice = round(dice, 3)
     return dice
 
@@ -597,54 +375,25 @@ def iou(y_true,y_pred):
     iou = round(iou, 3)
     return iou
 
-
-# In[38]:
-
-
-# Specify the directory to save the plot images
-output_directory = './output/ISLESfolder'
-os.makedirs(output_directory, exist_ok=True)
-
-# Plot each slice along with the original mask and predicted mask
 for i in range(5,60):
     plt.figure(figsize=(15, 5))
-
-    # Plot the original image
     plt.subplot(1, 4, 1)
-    plt.imshow(dwi_image[:,:,i], cmap='gray')
-    # plt.title('Input Slice')
+    # plt.imshow(dwi_image[:,:,i], cmap='gray')
     plt.title('Input')
-
-    # Plot the original mask
     plt.subplot(1, 4, 2)
-    plt.imshow(mask_image[:,:,i], cmap='gray')
-    # plt.title('Original Mask')
+    # plt.imshow(mask_image[:,:,i], cmap='gray')
     plt.title('Ground Truth')
-
-    # Plot the predicted mask
     plt.subplot(1, 4, 3)
-    plt.imshow(pred_wt[i,:,:,:], cmap='gray')
-    # plt.title('Predicted Mask')
+    # plt.imshow(pred_wt[i,:,:,:], cmap='gray')
     plt.title('Predicted')
-
-    # Plot the predicted mask
     plt.subplot(1, 4, 4)
-    plt.imshow(y_pred_thresholded[i,:,:,:], cmap='gray')
-    # plt.title('Thresholed Mask')
+    # plt.imshow(y_pred_thresholded[i,:,:,:], cmap='gray')
     plt.title('Threshold')
-
-    #plt.suptitle(f"Slice: {i+1}")
     dice = dice_score(mask_image[:,:,i], y_pred_thresholded[i,:,:,:])
     Iou = iou(mask_image[:,:,i], y_pred_thresholded[i,:,:,:])
     plt.suptitle(f"Sample_19_Slice_00{i}  ,Dice Score:{dice}  ,IOU:{Iou}")
-    #print(f'Dice Score: {dice}')
-    #plt.savefig(f'plot_{i}.png')
-    #plt.show()
-
-    # Save the plot image in the output folder
     output_filename = f'Sample_19_Slice_00{i}.png'
-    output_path = os.path.join(output_directory, output_filename)
+    output_path = os.path.join(OUTPUT_DIRECTORY, output_filename)
     plt.savefig(output_path)
-    plt.show()
-    plt.close()  # Close the figure to release memory
-
+    # plt.show()
+    plt.close()
