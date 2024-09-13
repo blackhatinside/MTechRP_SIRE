@@ -28,6 +28,8 @@ from tensorflow.keras.layers import Reshape
 
 print("Hi")
 
+img_resize = lambda img, dims: cv2.resize(img[:,:], dims)
+
 if os.name == 'nt':
     base_path = "C:\\Cyberkid\\MyMTech\\Labwork\\SecondYear\\MyWork\\Datasets\\ISLES-2022\\ISLES-2022"
 else:
@@ -335,12 +337,9 @@ mask_path = os.path.join(base_path, 'derivatives', 'sub-strokecase{}'.format("%0
 dwi_image = nib.load(dwi_path).get_fdata()
 mask_image = nib.load(mask_path).get_fdata()
 
-img_resize = lambda img, dims: cv2.resize(img[:,:], dims)
-
 dwi_image=img_resize(dwi_image, (112, 112))
 mask_image=img_resize(mask_image, (112, 112))
-dwi_image.shape
-mask_image.shape
+print("DWI img shape: {}\nMask img shape: {}\n".format(dwi_image.shape, mask_image.shape))
 
 fig, (ax1, ax2) = plt.subplots(1, 2)
 
