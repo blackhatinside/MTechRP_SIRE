@@ -28,6 +28,24 @@ from tensorflow.keras.layers import Reshape
 
 print("Hi")
 
+if os.name == 'nt':
+    base_path = "C:\\Cyberkid\\MyMTech\\Labwork\\SecondYear\\MyWork\\Datasets\\ISLES-2022\\ISLES-2022"
+else:
+    base_path = "/home/user/Tf_script/dataset/ISLES_2022/"
+
+scaler = MinMaxScaler()
+
+IMG_SIZE=112
+PATH_DATASET = base_path
+PATH_RAWDATA = os.path.join(base_path, "rawdata")
+PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
+
+OUTPUT_DIRECTORY = './output/ISLESfolder'
+os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
+
+print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
+print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
+
 def get_ids(path):
     directories = [f.path for f in os.scandir(path) if f.is_dir()]
     ids = []
@@ -35,6 +53,16 @@ def get_ids(path):
     for i in range(len(directories)):
         ids.append(directories[i][id_startindex:])
     return sorted(ids)
+
+train_ids = get_ids(PATH_RAWDATA)
+mask_ids = get_ids(PATH_DERIVATIVES)
+
+print("No of train_ids: {}\nNo of mask_ids: {}\n".format(len(train_ids), len(mask_ids)))
+
+train_test_ids, val_ids, train_test_mask, val_mask = train_test_split(train_ids,mask_ids,test_size=0.1)
+train_ids,  test_ids, train_mask , test_mask = train_test_split(train_test_ids,train_test_mask,test_size=0.15)
+
+print("train, validate, test: ", list(map(len, [train_ids, val_ids, test_ids])))
 
 # def dice_coeff(y_true,y_pred):
 #     y_true_new = K.flatten(y_true)
@@ -158,38 +186,6 @@ def iou(y_true,y_pred):
         return 1.0
     iou = (intersec) / (union- intersec)
     return iou
-
-print("Hi")
-
-img_resize = lambda img, dims: cv2.resize(img[:,:], dims)
-
-if os.name == 'nt':
-    base_path = "C:\\Cyberkid\\MyMTech\\Labwork\\SecondYear\\MyWork\\Datasets\\ISLES-2022\\ISLES-2022"
-else:
-    base_path = "/home/user/Tf_script/dataset/ISLES_2022/"
-
-scaler = MinMaxScaler()
-
-IMG_SIZE=112
-PATH_DATASET = base_path
-PATH_RAWDATA = os.path.join(base_path, "rawdata")
-PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
-
-OUTPUT_DIRECTORY = './output/ISLESfolder'
-os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
-
-print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
-print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
-
-train_ids = get_ids(PATH_RAWDATA)
-mask_ids = get_ids(PATH_DERIVATIVES)
-
-print("No of train_ids: {}\nNo of mask_ids: {}\n".format(len(train_ids), len(mask_ids)))
-
-train_test_ids, val_ids, train_test_mask, val_mask = train_test_split(train_ids,mask_ids,test_size=0.1)
-train_ids,  test_ids, train_mask , test_mask = train_test_split(train_test_ids,train_test_mask,test_size=0.15)
-
-print("train, validate, test: ", list(map(len, [train_ids, val_ids, test_ids])))
 
 print("Hi")
 
@@ -338,6 +334,8 @@ mask_path = os.path.join(base_path, 'derivatives', 'sub-strokecase{}'.format("%0
 
 dwi_image = nib.load(dwi_path).get_fdata()
 mask_image = nib.load(mask_path).get_fdata()
+
+img_resize = lambda img, dims: cv2.resize(img[:,:], dims)
 
 dwi_image=img_resize(dwi_image, (112, 112))
 mask_image=img_resize(mask_image, (112, 112))
