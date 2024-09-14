@@ -77,19 +77,11 @@ def iou(y_true,y_pred):
     iou = (intersec + 0.1) / (union- intersec + 0.1)
     return iou
 
-def dice_score(y_true, y_pred):
+def dice_score(y_true, y_pred, smooth=1e-5):
     intersection = tf.reduce_sum(y_true * y_pred)
     union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred)
-    dice = (2.0 * intersection + 1e-5) / (union + 1e-5)
+    dice = (2.0 * intersection + smooth) / (union + smooth)
     return dice
-
-# def dice_score(y_true, y_pred, smooth=1e-5):
-#     y_true_f = K.flatten(y_true)
-#     y_pred_f = K.flatten(y_pred)
-#     intersection = K.sum(y_true_f * y_pred_f)
-#     union = K.sum(y_true_f) + K.sum(y_pred_f)
-#     dice = (2.0 * intersection + smooth) / (union + smooth)
-#     return dice
 
 # # # # # Loss Functions
 
@@ -110,6 +102,16 @@ def binary_focal_loss(gamma=2., alpha=0.25):
         focal_loss = - alpha_t * K.pow((K.ones_like(y_true) - p_t), gamma) * K.log(p_t)
         return K.mean(focal_loss)
     return focal_loss
+
+def dice_crossentropy_loss(y_true, y_pred, alpha=0.5):
+    dice_loss = 1.0 - dice_score(y_true, y_pred)
+    crossentropy_loss = tf.keras.losses.BinaryCrossentropy()(y_true, y_pred)
+    return alpha * dice_loss + (1 - alpha) * crossentropy_loss
+
+def dice_focal_loss(y_true, y_pred, gamma=2., alpha=0.25, alpha_dice=0.5):
+    dice_loss = 1.0 - dice_score(y_true, y_pred)
+    focal_loss = binary_focal_loss(gamma, alpha)(y_true, y_pred)
+    return alpha_dice * dice_loss + (1 - alpha_dice) * focal_loss
 
 # # # # # Layers/Blocks
 
@@ -223,7 +225,6 @@ outputs = Conv2D(1, (1,1),activation="sigmoid")(e5)
 
 model=Model(inputs=[inputs], outputs=[outputs],name='AttentionUnet')
 model.compile(
-    # loss=focal_loss(gamma=2.0, alpha=0.25),
     loss=single_dice_loss,
     # loss = binary_crossentropy_loss,
     # loss = binary_focal_loss(gamma=2.0, alpha=0.25),
