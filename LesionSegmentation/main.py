@@ -44,8 +44,6 @@ PATH_RAWDATA = os.path.join(base_path, "rawdata")
 PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
 OUTPUT_DIRECTORY = "./output/ISLESfolder"
 os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
-VAL_EPOCH = 5
-VAL_PATIENCE = 40
 
 print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
 print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
@@ -73,19 +71,17 @@ def precision(y_true, y_pred):
     precision = true_positives / (predicted_positives + K.epsilon())
     return precision
 
-def dice_score(y_true, y_pred):
-    intersection = np.sum(y_true * y_pred)
-    total = np.sum(y_true) + np.sum(y_pred)
-    dice = (2 * intersection +1 ) / (total + 1)
-    dice = round(dice, 3)
-    return dice
-
 def iou(y_true,y_pred):
-    intersec = np.sum(y_true * y_pred)
-    union = np.sum(y_true + y_pred)
-    iou = (intersec + 1) / (union- intersec + 1)
-    iou = round(iou, 3)
+    intersec = K.sum(y_true * y_pred)
+    union = K.sum(y_true + y_pred)
+    iou = (intersec + 0.1) / (union- intersec + 0.1)
     return iou
+
+def dice_score(y_true, y_pred, smooth = 1e-5):
+    intersection = tf.reduce_sum(y_true * y_pred)
+    union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred)
+    dice = (2.0 * intersection + smooth) / (union + smooth)
+    return dice
 
 # # # # # Loss Functions
 
@@ -212,6 +208,9 @@ test_generator = DataGenerator(test_ids)
 tvt_generator = [training_generator, val_generator, test_generator]
 print("train, validate, test: ", list(map(len, tvt_generator)))
 
+VAL_EPOCH = 30
+VAL_PATIENCE = 40
+
 inputs=Input((112,112,1))
 d1,p1=encoder_block(inputs,64)
 d2,p2=encoder_block(p1,128)
@@ -298,7 +297,9 @@ def iou(y_true,y_pred):
     iou = (intersec) / (union- intersec)
     return iou
 
-loss_values, dice_values, iou_values = [], [], []
+loss_values = []
+dice_values = []
+iou_values = []
 
 for batch_x, batch_y in test_generator:
     mask_image = np.expand_dims(batch_y, axis=-1)
@@ -362,6 +363,20 @@ y_pred_thresholded = pred_wt > 0.1
 
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(y_pred_thresholded[31,:,:,:],cmap='gray')
+
+def dice_score(y_true, y_pred, smooth = 1):
+    intersection = np.sum(y_true * y_pred)
+    total = np.sum(y_true) + np.sum(y_pred)
+    dice = (2 * intersection + smooth) / (total + smooth)
+    dice = round(dice, 3)
+    return dice
+
+def iou(y_true,y_pred, smooth = 1):
+    intersec = np.sum(y_true * y_pred)
+    union = np.sum(y_true + y_pred)
+    iou = (intersec + smooth) / (union- intersec + smooth)
+    iou = round(iou, 3)
+    return iou
 
 for i in range(5,60):
     plt.figure(figsize=(15, 5))
