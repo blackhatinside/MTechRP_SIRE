@@ -233,6 +233,32 @@ model.compile(
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
     metrics = ['accuracy', dice_coeff,dice_score,iou, precision]
 )
+
+# # # {
+
+# Add batch normalization and dropout to the encoder and decoder blocks
+encoder_block = lambda x, filters: Conv2D(filters, (3, 3), padding='same')(x)
+encoder_block = lambda x, filters: BatchNormalization()(encoder_block(x, filters))
+encoder_block = lambda x, filters: Dropout(0.2)(encoder_block(x, filters))
+
+decoder_block = lambda x, filters: Conv2DTranspose(filters, (2, 2), strides=(2, 2), padding='same')(x)
+decoder_block = lambda x, filters: BatchNormalization()(decoder_block(x, filters))
+decoder_block = lambda x, filters: Dropout(0.2)(decoder_block(x, filters))
+
+# Add batch normalization and dropout to the attention block
+attention_block = lambda x, h_layer: Conv2D(h_layer.shape[-1], (1, 1), padding='same')(x)
+attention_block = lambda x, h_layer: BatchNormalization()(attention_block(x, h_layer))
+attention_block = lambda x, h_layer: Dropout(0.2)(attention_block(x, h_layer))
+
+# Compile the model with the new layers
+model.compile(
+    loss=single_dice_loss,
+    optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+    metrics=['accuracy', dice_coeff, dice_score, iou, precision]
+)
+
+# # # }
+
 model.summary()
 
 print("Hi")
