@@ -12,7 +12,7 @@ from skimage.io import imshow
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from tqdm import tqdm
+# from tqdm import tqdm
 
 from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import EarlyStopping
@@ -77,27 +77,36 @@ def precision(y_true, y_pred):
 #     iou = (intersec + 0.1) / (union- intersec + 0.1)
 #     return iou
 
+def dice_score(y_true, y_pred, smooth=1e-5):
+    intersection = tf.reduce_sum(y_true * y_pred)
+    union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred)
+    dice = (2.0 * intersection + smooth) / (union + smooth)
+    return dice
+
+# #
+
+# def dice_score(y_true, y_pred):
+#     intersection = np.sum(y_true * y_pred)
+#     total = np.sum(y_true) + np.sum(y_pred)
+#     dice = (2 * intersection +1 ) / (total + 1)
+#     dice = round(dice, 3)
+#     return dice
+
+# def iou(y_true,y_pred):
+#     intersec = np.sum(y_true * y_pred)
+#     union = np.sum(y_true + y_pred)
+#     iou = (intersec + 1) / (union- intersec + 1)
+#     iou = round(iou, 3)
+#     return iou
+
 # def dice_score(y_true, y_pred, smooth=1e-5):
+#     # Cast tensors to float32 to ensure compatibility with TensorFlow operations
+#     y_true = tf.cast(y_true, tf.float32)
+#     y_pred = tf.cast(y_pred, tf.float32)
 #     intersection = tf.reduce_sum(y_true * y_pred)
 #     union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred)
 #     dice = (2.0 * intersection + smooth) / (union + smooth)
 #     return dice
-
-# #
-
-def dice_score(y_true, y_pred):
-    intersection = np.sum(y_true * y_pred)
-    total = np.sum(y_true) + np.sum(y_pred)
-    dice = (2 * intersection +1 ) / (total + 1)
-    dice = round(dice, 3)
-    return dice
-
-def iou(y_true,y_pred):
-    intersec = np.sum(y_true * y_pred)
-    union = np.sum(y_true + y_pred)
-    iou = (intersec + 1) / (union- intersec + 1)
-    iou = round(iou, 3)
-    return iou
 
 def dice_coeff(y_true,y_pred):
     y_true = tf.cast(y_true, tf.float32)
@@ -110,17 +119,17 @@ def dice_coeff(y_true,y_pred):
     numerator = K.sum(y_true_new * y_pred_new)
     return (2.0*numerator)/(denominator)
 
-# def iou(y_true,y_pred):
-#     y_true = tf.cast(y_true, tf.float32)
-#     y_pred = tf.cast(y_pred, tf.float32)
-#     y_true = K.flatten(y_true)
-#     y_pred = K.flatten(y_pred)
-#     intersec = K.sum(y_true * y_pred)
-#     union = K.sum(y_true + y_pred)
-#     if union == 0.0:
-#         return 1.0
-#     iou = (intersec) / (union- intersec)
-#     return iou
+def iou(y_true,y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    y_true = K.flatten(y_true)
+    y_pred = K.flatten(y_pred)
+    intersec = K.sum(y_true * y_pred)
+    union = K.sum(y_true + y_pred)
+    if union == 0.0:
+        return 1.0
+    iou = (intersec) / (union- intersec)
+    return iou
 
 # # # # # Loss Functions
 
