@@ -12,7 +12,7 @@ from skimage.io import imshow
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-# from tqdm import tqdm
+from tqdm import tqdm
 
 from tensorflow.keras.callbacks import CSVLogger
 from tensorflow.keras.callbacks import EarlyStopping
@@ -44,6 +44,8 @@ PATH_RAWDATA = os.path.join(base_path, "rawdata")
 PATH_DERIVATIVES = os.path.join(base_path, "derivatives")
 OUTPUT_DIRECTORY = "./output/ISLESfolder"
 os.makedirs(OUTPUT_DIRECTORY, exist_ok=True)
+VAL_EPOCH = 5
+VAL_PATIENCE = 40
 
 print("No of Folders Inside Training: ", len(os.listdir(PATH_RAWDATA)))
 print("No of Folders Inside Ground Truth: ", len(os.listdir(PATH_DERIVATIVES)))
@@ -58,12 +60,12 @@ def get_ids(path):
         ids.append(directories[i][id_startindex:])
     return sorted(ids)
 
-# def dice_coeff(y_true,y_pred):
-#     y_true_new = K.flatten(y_true)
-#     y_pred_new = K.flatten(y_pred)
-#     denominator = K.sum(y_true_new) + K.sum(y_pred_new)
-#     numerator = K.sum(y_true_new * y_pred_new)
-#     return (2*numerator + 1)/(denominator+1)
+def dice_coeff(y_true,y_pred):
+    y_true_new = K.flatten(y_true)
+    y_pred_new = K.flatten(y_pred)
+    denominator = K.sum(y_true_new) + K.sum(y_pred_new)
+    numerator = K.sum(y_true_new * y_pred_new)
+    return (2*numerator + 1)/(denominator+1)
 
 def precision(y_true, y_pred):
     true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
@@ -71,64 +73,18 @@ def precision(y_true, y_pred):
     precision = true_positives / (predicted_positives + K.epsilon())
     return precision
 
-# def iou(y_true,y_pred):
-#     intersec = K.sum(y_true * y_pred)
-#     union = K.sum(y_true + y_pred)
-#     iou = (intersec + 0.1) / (union- intersec + 0.1)
-#     return iou
-
-def dice_score(y_true, y_pred, smooth=1e-5):
-    intersection = tf.reduce_sum(y_true * y_pred)
-    union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred)
-    dice = (2.0 * intersection + smooth) / (union + smooth)
+def dice_score(y_true, y_pred):
+    intersection = np.sum(y_true * y_pred)
+    total = np.sum(y_true) + np.sum(y_pred)
+    dice = (2 * intersection +1 ) / (total + 1)
+    dice = round(dice, 3)
     return dice
 
-# #
-
-# def dice_score(y_true, y_pred):
-#     intersection = np.sum(y_true * y_pred)
-#     total = np.sum(y_true) + np.sum(y_pred)
-#     dice = (2 * intersection +1 ) / (total + 1)
-#     dice = round(dice, 3)
-#     return dice
-
-# def iou(y_true,y_pred):
-#     intersec = np.sum(y_true * y_pred)
-#     union = np.sum(y_true + y_pred)
-#     iou = (intersec + 1) / (union- intersec + 1)
-#     iou = round(iou, 3)
-#     return iou
-
-# def dice_score(y_true, y_pred, smooth=1e-5):
-#     # Cast tensors to float32 to ensure compatibility with TensorFlow operations
-#     y_true = tf.cast(y_true, tf.float32)
-#     y_pred = tf.cast(y_pred, tf.float32)
-#     intersection = tf.reduce_sum(y_true * y_pred)
-#     union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred)
-#     dice = (2.0 * intersection + smooth) / (union + smooth)
-#     return dice
-
-def dice_coeff(y_true,y_pred):
-    y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.cast(y_pred, tf.float32)
-    y_true_new = K.flatten(y_true)
-    y_pred_new = K.flatten(y_pred)
-    denominator = K.sum(y_true_new) + K.sum(y_pred_new)
-    if denominator == 0.0:
-        return 1.0
-    numerator = K.sum(y_true_new * y_pred_new)
-    return (2.0*numerator)/(denominator)
-
 def iou(y_true,y_pred):
-    y_true = tf.cast(y_true, tf.float32)
-    y_pred = tf.cast(y_pred, tf.float32)
-    y_true = K.flatten(y_true)
-    y_pred = K.flatten(y_pred)
-    intersec = K.sum(y_true * y_pred)
-    union = K.sum(y_true + y_pred)
-    if union == 0.0:
-        return 1.0
-    iou = (intersec) / (union- intersec)
+    intersec = np.sum(y_true * y_pred)
+    union = np.sum(y_true + y_pred)
+    iou = (intersec + 1) / (union- intersec + 1)
+    iou = round(iou, 3)
     return iou
 
 # # # # # Loss Functions
@@ -256,9 +212,6 @@ test_generator = DataGenerator(test_ids)
 tvt_generator = [training_generator, val_generator, test_generator]
 print("train, validate, test: ", list(map(len, tvt_generator)))
 
-VAL_EPOCH = 30
-VAL_PATIENCE = 40
-
 inputs=Input((112,112,1))
 d1,p1=encoder_block(inputs,64)
 d2,p2=encoder_block(p1,128)
@@ -273,10 +226,10 @@ outputs = Conv2D(1, (1,1),activation="sigmoid")(e5)
 
 model=Model(inputs=[inputs], outputs=[outputs],name='AttentionUnet')
 model.compile(
-    # loss=single_dice_loss,
+    loss=single_dice_loss,
     # loss = binary_crossentropy_loss,
     # loss = binary_focal_loss(gamma=2.0, alpha=0.25),
-    loss = dice_crossentropy_loss,
+    # loss = dice_crossentropy_loss,
     # loss = dice_focal_loss,
     optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
     metrics = ['accuracy', dice_coeff,dice_score,iou, precision]
@@ -322,9 +275,30 @@ y_pred_thresholded = test_wt > 0.4
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(y_pred_thresholded[10,:,:,:],cmap='gray')
 
-loss_values = []
-dice_values = []
-iou_values = []
+def dice_coeff(y_true,y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    y_true_new = K.flatten(y_true)
+    y_pred_new = K.flatten(y_pred)
+    denominator = K.sum(y_true_new) + K.sum(y_pred_new)
+    if denominator == 0.0:
+        return 1.0
+    numerator = K.sum(y_true_new * y_pred_new)
+    return (2.0*numerator)/(denominator)
+
+def iou(y_true,y_pred):
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+    y_true = K.flatten(y_true)
+    y_pred = K.flatten(y_pred)
+    intersec = K.sum(y_true * y_pred)
+    union = K.sum(y_true + y_pred)
+    if union == 0.0:
+        return 1.0
+    iou = (intersec) / (union- intersec)
+    return iou
+
+loss_values, dice_values, iou_values = [], [], []
 
 for batch_x, batch_y in test_generator:
     mask_image = np.expand_dims(batch_y, axis=-1)
@@ -388,7 +362,6 @@ y_pred_thresholded = pred_wt > 0.1
 
 fig, ax = plt.subplots(1,1, figsize=(3,3))
 ax.imshow(y_pred_thresholded[31,:,:,:],cmap='gray')
-
 
 for i in range(5,60):
     plt.figure(figsize=(15, 5))
